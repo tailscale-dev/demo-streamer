@@ -6,5 +6,6 @@ This is used as part of a demo and is only public so that it's easy to `go get .
 ## To run
 
 ```shell
-go run main.go
+go install github.com/clstokes/go-http-streamer@latest
+./go/bin/go-http-streamer
 ```

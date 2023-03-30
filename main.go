@@ -26,7 +26,7 @@ func main() {
 		fmt.Printf("%s\n", uuid)
 	})
 
-	port := "80"
+	port := "8080"
 	if portEnv := os.Getenv("PORT"); portEnv != "" {
 		port = portEnv
 	}
