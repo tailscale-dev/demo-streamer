@@ -3,6 +3,8 @@
   <head>
     <title>go-http-streamer</title>
     <script>
+      const originalTitle = document.title;
+
       function insertData(val) {
         document
           .querySelector("#data")
@@ -10,16 +12,26 @@
       }
 
       function poll() {
-        fetch("/api/uuid")
-          .then((response) => {
-            if (response.ok) {
-              return response.text();
-            } else {
-              throw Error("error from backend");
-            }
-          })
-          .then((response) => insertData(`🟢 ${response}`))
-          .catch((error) => insertData(`🔴 ${error}`));
+        const xhr = new XMLHttpRequest();
+        xhr.timeout = 2000;
+
+        xhr.onload = () => {
+          if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+            insertData(`🟢 ${xhr.response}`);
+            document.title = `🟢 ${originalTitle}`;
+          }
+        };
+
+        errFn = () => {
+          insertData(`🔴`);
+          document.title = `🔴 ${originalTitle}`;
+        };
+        xhr.onabort = errFn;
+        xhr.onerror = errFn;
+        xhr.ontimeout = errFn;
+
+        xhr.open("GET", "/api/uuid");
+        xhr.send();
       }
 
       setInterval(() => {
