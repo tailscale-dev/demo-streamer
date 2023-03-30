@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -9,8 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:embed ui/*
+var static embed.FS
+
 func main() {
-	http.Handle("/", http.FileServer(http.Dir("./ui")))
+	uiAssets, _ := fs.Sub(static, "ui")
+	http.Handle("/", http.FileServer(http.FS(uiAssets)))
+
 	http.HandleFunc("/api/uuid", func(w http.ResponseWriter, r *http.Request) {
 		uuid := uuid.New().String()
 		// write to http response
