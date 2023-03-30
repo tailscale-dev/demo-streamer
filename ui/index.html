@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" class="lang-en">
+  <head>
+    <title>go-http-streamer</title>
+    <script>
+      function insertData(val) {
+        document
+          .querySelector("#data")
+          .insertAdjacentHTML("afterbegin", `<p>${val}</p>`);
+      }
+
+      function poll() {
+        fetch("/api/uuid")
+          .then((response) => {
+            if (response.ok) {
+              return response.text();
+            } else {
+              throw Error("error from backend");
+            }
+          })
+          .then((response) => insertData(`🟢 ${response}`))
+          .catch((error) => insertData(`🔴 ${error}`));
+      }
+
+      setInterval(() => {
+        poll();
+      }, 1000);
+    </script>
+  </head>
+  <body>
+    <div id="data"></div>
+  </body>
+</html>
