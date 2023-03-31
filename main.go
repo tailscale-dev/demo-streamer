@@ -15,8 +15,13 @@ import (
 var static embed.FS
 
 func main() {
-	uiAssets, _ := fs.Sub(static, "ui")
-	http.Handle("/", http.FileServer(http.FS(uiAssets)))
+
+	if devMode := os.Getenv("DEV"); devMode == "" {
+		uiAssets, _ := fs.Sub(static, "ui")
+		http.Handle("/", http.FileServer(http.FS(uiAssets)))
+	} else {
+		http.Handle("/", http.FileServer(http.Dir("./ui")))
+	}
 
 	http.HandleFunc("/api/uuid", func(w http.ResponseWriter, r *http.Request) {
 		uuid := uuid.New().String()
