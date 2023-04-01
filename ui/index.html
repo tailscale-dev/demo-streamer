@@ -7,10 +7,17 @@
       body {
         background-color: #1c1815;
       }
+      #logo {
+        width: 200px;
+        position: fixed;
+        right: 0px;
+        bottom: 0px;
+      }
     </style>
   </head>
   <body>
     <canvas id="funnel"></canvas>
+    <img id="logo" src="Tailscale-Logo-White.png" />
   </body>
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.12.0/matter.min.js"></script>
@@ -128,11 +135,7 @@
         xhr.send();
       };
 
-      /**
-       * 160ms seems to be a good interval for the funnel to fill to the top of the page 
-       * and then begin to empty the page immediately once the backend is unavailable.
-       */
-      setInterval(handleClick, 160); 
+      setInterval(handleClick, 155);
     }
 
     init();
