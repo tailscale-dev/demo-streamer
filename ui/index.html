@@ -22,6 +22,8 @@
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.12.0/matter.min.js"></script>
   <script>
+    const pageTitle = document.title;
+
     /**
      * All credit to https://github.com/shayne for the animation code.
      */
@@ -121,11 +123,13 @@
         xhr.onload = () => {
           if (xhr.readyState === xhr.DONE && xhr.status === 200) {
             World.add(engine.world, [createBall()]);
+            document.title = `🟢 ${pageTitle}`;
           }
         };
 
         errFn = () => {
           console.log("error from backend");
+          document.title = `🔴 ${pageTitle}`;
         };
         xhr.onabort = errFn;
         xhr.onerror = errFn;
