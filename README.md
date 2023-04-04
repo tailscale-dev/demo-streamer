@@ -18,3 +18,10 @@ or
 ```shell
 curl -fsSL https://raw.githubusercontent.com/clstokes/go-http-streamer/main/run_ubuntu.sh | sh
 ```
+
+## To enable Tailscale Funnel
+
+```shell
+tailscale serve https / http://127.0.0.1:8080
+tailscale funnel 443 on
+```
