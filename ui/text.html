@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>go-http-streamer</title>
+    <style>
+      body {
+        background-color: #fff;
+      }
+      #logo {
+        background-color: #fff;
+      }
+      #live-data tbody>tr>td { 
+        margin-right: 40;
+      }
+      #logo {
+        width: 200px;
+        position: fixed;
+        right: 0px;
+        bottom: 0px;
+      }
+    </style>
+  </head>
+  <body>
+    <table id="live-data"></table>
+    <img id="logo" src="Tailscale-Logo-Black.png" />
+  </body>
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.12.0/matter.min.js"></script>
+  <script>
+    const pageTitle = document.title;
+    const dataTable = document.getElementById("live-data");
+
+    const insertData = (cells) => {
+      const newRow = dataTable.insertRow(0);
+      for (c of cells) {
+        newRow.insertCell().innerHTML = c;
+      }
+    };
+
+    const handleClick = () => {
+      const xhr = new XMLHttpRequest();
+      xhr.timeout = 1000;
+
+      errFn = () => {
+        console.log("error from backend");
+        insertData(["🔴", "GET", "/api/uuid", xhr.status, xhr.responseText]);
+
+        document.title = `🔴 ${pageTitle}`;
+      };
+
+      xhr.onabort = errFn;
+      xhr.onerror = errFn;
+      xhr.ontimeout = errFn;
+
+      xhr.onload = () => {
+        if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+          insertData(["🟢", "GET", "/api/uuid", xhr.status, xhr.responseText]);
+
+          document.title = `🟢 ${pageTitle}`;
+        } else {
+          errFn();
+        }
+      };
+
+      xhr.open("GET", "/api/uuid");
+      xhr.send();
+    };
+
+    setInterval(handleClick, 750);
+  </script>
+</html>
