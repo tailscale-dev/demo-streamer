@@ -8,15 +8,44 @@
         background-color: #1c1815;
       }
       #logo {
-        width: 200px;
+        width: 350px;
         position: fixed;
         right: 0px;
         bottom: 0px;
+      }
+      #marketing-message {
+        position: absolute;
+        top: 30%;
+        right: 2%;
+        /* color: rgb(208,208,208); */
+        color: #eee;
+        font-family: ui-sans-serif, system-ui;
+      }
+      #marketing-message h1 {
+        font-size: 3em;
+        margin-bottom: 10px;
+      }
+      #marketing-message ul {
+        list-style-type: square;
+        padding-left: 25px;
+      }
+      #marketing-message > ul li {
+        font-size: 1.4em;
+        margin-bottom: 0.2em;
       }
     </style>
   </head>
   <body>
     <canvas id="funnel"></canvas>
+    <div id="marketing-message">
+      <h1>Tailscale</h1>
+      <ul>
+        <li>Zero-config business VPN</li>
+        <li>Software defined network based on WireGuard®</li>
+        <li>Secure access to shared resources</li>
+        <li>Single sign-on (SSO) for your network</li>
+      </ul>
+    </div>
     <img id="logo" src="Tailscale-Logo-White.png" />
   </body>
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
