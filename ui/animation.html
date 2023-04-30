@@ -16,8 +16,7 @@
       #marketing-message {
         position: absolute;
         top: 30%;
-        right: 2%;
-        /* color: rgb(208,208,208); */
+        right: 30%;
         color: #eee;
         font-family: ui-sans-serif, system-ui;
       }
@@ -51,14 +50,38 @@
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.12.0/matter.min.js"></script>
   <script>
+    // http://unscriptable.com/2009/03/20/debouncing-javascript-methods/
+    var debounce = function (func, threshold, execAsap) {
+      var timeout;
+
+      return function debounced() {
+        var obj = this,
+          args = arguments;
+        function delayed() {
+          if (!execAsap) func.apply(obj, args);
+          timeout = null;
+        }
+
+        if (timeout) clearTimeout(timeout);
+        else if (execAsap) func.apply(obj, args);
+
+        timeout = setTimeout(delayed, threshold || 100);
+      };
+    };
+  </script>
+  <script>
     const pageTitle = document.title;
 
     /**
      * All credit to https://github.com/shayne for the animation code.
      */
     const world = document.getElementById("funnel");
+    const messageBox = document.getElementById("marketing-message");
+
     const { Engine, Render, Runner, World, Bodies } = Matter;
 
+    const edgeColor = "#1c1815";
+    // const edgeColor = "#ddd";
     let engine = Engine.create();
 
     const textures = [
@@ -86,27 +109,42 @@
         },
       });
 
+      let messageBoxPosition = messageBox.getBoundingClientRect();
+
       World.add(engine.world, [
-        Bodies.rectangle(270, 0, 1030, 20, {
-          isStatic: true,
-          angle: Math.PI * 0.3,
-          render: { fillStyle: "#060a1900" },
-        }),
-        Bodies.rectangle(1060, 0, 1030, 20, {
-          isStatic: true,
-          angle: -Math.PI * 0.3,
-          render: { fillStyle: "#060a1900" },
-        }),
-        Bodies.rectangle(580, 780, 20, 700, {
-          isStatic: true,
-          angle: Math.PI * 0,
-          render: { fillStyle: "#060a1900" },
-        }),
-        Bodies.rectangle(750, 780, 20, 700, {
-          isStatic: true,
-          angle: Math.PI * 0,
-          render: { fillStyle: "#060a1900" },
-        }),
+        Bodies.rectangle(
+          messageBoxPosition.x + messageBoxPosition.width/6,
+          messageBoxPosition.y + 20,
+          messageBoxPosition.width/3,
+          20,
+          {
+            isStatic: true,
+            angle: Math.PI * -0.05,
+            render: { fillStyle: edgeColor },
+          }
+        ),
+        Bodies.rectangle(
+          messageBoxPosition.x + messageBoxPosition.width/2.5,
+          messageBoxPosition.y + 50,
+          messageBoxPosition.width/3,
+          20,
+          {
+            isStatic: true,
+            angle: Math.PI * -0.85,
+            render: { fillStyle: edgeColor },
+          }
+        ),
+        Bodies.rectangle(
+          messageBoxPosition.x + messageBoxPosition.width/1.3,
+          messageBoxPosition.y + 95,
+          messageBoxPosition.width/2,
+          20,
+          {
+            isStatic: true,
+            angle: Math.PI * 0.05,
+            render: { fillStyle: edgeColor },
+          }
+        ),
       ]);
 
       function createBall() {
@@ -175,5 +213,13 @@
     }
 
     init();
+    onresize = debounce(
+      (event) => {
+        console.log("reloading after window resize");
+        window.location.reload();
+      },
+      250,
+      false
+    );
   </script>
 </html>
