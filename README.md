@@ -3,6 +3,13 @@
 > :warning: Please don't use this for anything.
 This is used as part of a demo for [Tailscale](https://tailscale.com/).
 
+## Build and Run with Docker
+
+```shell
+docker build .
+docker run demo-streamer
+```
+
 ## Install and Run on Ubuntu
 
 ```shell
