@@ -1,4 +1,4 @@
-# go-http-streamer
+# demo-streamer
 
 > :warning: Please don't use this for anything.
 This is used as part of a demo for [Tailscale](https://tailscale.com/).
@@ -9,14 +9,14 @@ This is used as part of a demo for [Tailscale](https://tailscale.com/).
 apt update
 apt install -y golang
 
-go install github.com/clstokes/go-http-streamer@latest
-nohup ./go/bin/go-http-streamer &
+go install github.com/clstokes/demo-streamer@latest
+nohup ./go/bin/demo-streamer &
 ```
 
 or
 
 ```shell
-curl -fsSL https://raw.githubusercontent.com/clstokes/go-http-streamer/main/run_ubuntu.sh | sh
+curl -fsSL https://raw.githubusercontent.com/clstokes/demo-streamer/main/run_ubuntu.sh | sh
 ```
 
 ## To enable Tailscale Funnel
