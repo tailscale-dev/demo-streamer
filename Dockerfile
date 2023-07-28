@@ -13,7 +13,7 @@ COPY main.go ./
 # RUN ls -al ./ui
 
 RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -o /demo-streamer
+RUN CGO_ENABLED=0 GOOS=linux go build -o /streamer-demo
 
 EXPOSE 8080
-CMD ["/demo-streamer"]
+CMD ["/streamer-demo"]
