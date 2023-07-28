@@ -4,7 +4,13 @@ FROM golang:1.19-alpine
 
 WORKDIR /app
 
-COPY src/ ./
+COPY ui ./ui
+COPY go.mod ./
+COPY go.sum ./
+COPY main.go ./
+
+# RUN ls -al
+# RUN ls -al ./ui
 
 RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -o /demo-streamer
