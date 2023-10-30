@@ -5,4 +5,4 @@ push:
 	docker push clstokes/streamer-demo
 
 run:
-	docker run -p 127.0.0.1:8080:8080/tcp clstokes/streamer-demo
+	docker run --publish 8080:8080 clstokes/streamer-demo

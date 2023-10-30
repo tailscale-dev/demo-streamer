@@ -6,15 +6,15 @@ This is used as part of a demo for [Tailscale](https://tailscale.com/).
 ## Build and Run with Docker
 
 ```shell
-docker build .
-docker run streamer-demo
+docker build --tag streamer-demo .
+docker run --publish 8080 streamer-demo
 ```
 
 ## Install and Run on Ubuntu
 
 ```shell
-apt update
-apt install -y golang
+apt-get update
+apt-get install -y golang
 
 go install github.com/clstokes/streamer-demo@latest
 nohup ./go/bin/streamer-demo &
