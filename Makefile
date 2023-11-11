@@ -1,8 +1,11 @@
+init:
+	docker buildx create --name mybuilder --bootstrap --use
+
 build:
-	docker build --tag clstokes/streamer-demo .
+	docker buildx build --tag clstokes/streamer-demo --load .
 
 push:
-	docker push clstokes/streamer-demo
+	docker buildx build --tag clstokes/streamer-demo --platform linux/amd64,linux/arm64 --push .
 
 run:
-	docker run --publish 8080:8080 clstokes/streamer-demo
+	docker run --rm --publish 8080:8080 clstokes/streamer-demo
