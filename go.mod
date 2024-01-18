@@ -1,4 +1,4 @@
-module github.com/clstokes/streamer-demo
+module github.com/clstokes/demo-streamer
 
 go 1.21
 

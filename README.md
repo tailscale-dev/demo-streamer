@@ -1,4 +1,4 @@
-# streamer-demo
+# demo-streamer
 
 > :warning: Please don't use this for anything.
 This is used as part of a demo for [Tailscale](https://tailscale.com/).
@@ -6,8 +6,8 @@ This is used as part of a demo for [Tailscale](https://tailscale.com/).
 ## Build and Run with Docker
 
 ```shell
-docker build --tag streamer-demo .
-docker run --publish 8080 streamer-demo
+docker build --tag demo-streamer .
+docker run --publish 8080 demo-streamer
 ```
 
 ## Install and Run on Ubuntu
@@ -16,14 +16,14 @@ docker run --publish 8080 streamer-demo
 apt-get update
 apt-get install -y golang
 
-go install github.com/clstokes/streamer-demo@latest
-nohup ./go/bin/streamer-demo &
+go install github.com/clstokes/demo-streamer@latest
+nohup ./go/bin/demo-streamer &
 ```
 
 or
 
 ```shell
-curl -fsSL https://raw.githubusercontent.com/clstokes/streamer-demo/main/run_ubuntu.sh | sh
+curl -fsSL https://raw.githubusercontent.com/clstokes/demo-streamer/main/run_ubuntu.sh | sh
 ```
 
 ## To enable Tailscale Funnel
