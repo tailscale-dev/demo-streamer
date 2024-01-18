@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"embed"
+	"flag"
 	"fmt"
 	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/google/uuid"
 	"tailscale.com/client/tailscale"
@@ -16,56 +16,66 @@ import (
 	"tailscale.com/tailcfg"
 )
 
-//go:embed static/*
-var static embed.FS
+//go:embed ui/*
+var ui embed.FS
+
+var (
+	port = flag.String("port", "80", "the port to listen on")
+	dev  = flag.Bool("dev", false, "enable dev mode")
+)
 
 func main() {
-	if devMode := os.Getenv("DEV"); devMode == "" {
-		uiAssets, _ := fs.Sub(static, "static")
-		http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(uiAssets))))
-	} else {
-		http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	}
+	flag.Parse()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		serveTemplate("./ui/index.html", getPageData(r.Context(), r.RemoteAddr), w, r)
-	})
+	var templateFn func() *template.Template
+	if *dev {
+		// load assets from local filesystem
+		http.Handle("/ui/", http.StripPrefix("/ui/", http.FileServer(http.Dir("ui"))))
+
+		templateFn = func() *template.Template {
+			t, _ := template.ParseFiles("./ui/index.html")
+			return t
+		}
+	} else {
+		// load assets from embedded filesystem
+		uiAssets, _ := fs.Sub(ui, "ui")
+		http.Handle("/ui/", http.StripPrefix("/ui/", http.FileServer(http.FS(uiAssets))))
+
+		t, _ := template.ParseFS(uiAssets, "index.html")
+		templateFn = func() *template.Template {
+			return t
+		}
+	}
 
 	http.HandleFunc("/api/uuid", func(w http.ResponseWriter, r *http.Request) {
 		uuid := uuid.New().String()
 		fmt.Fprintf(w, "%s\n", uuid) // write to http response
-		fmt.Printf("%s\n", uuid)     // write to stdout
+		fmt.Printf("%s\n", uuid)     // write to stdout - TODO: maybe only in dev mode?
 	})
 
-	port := "8080"
-	if portEnv := os.Getenv("PORT"); portEnv != "" {
-		port = portEnv
-	}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var p *Page
+		whois, err := tailscaleWhois(r.Context(), r.RemoteAddr)
+		if err != nil {
+			p = &Page{UserProfile: nil}
+		} else {
+			p = &Page{UserProfile: whois.UserProfile}
+		}
 
-	fmt.Printf("Starting server: http://localhost:%s/\n", port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil); err != nil {
+		templateFn().Execute(w, p)
+	})
+
+	fmt.Printf("Starting server: http://localhost:%s/\n", *port)
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", *port), nil); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func serveTemplate(templatePath string, p *Page, w http.ResponseWriter, r *http.Request) {
-	t, _ := template.ParseFiles(templatePath)
-	t.Execute(w, p)
 }
 
 type Page struct {
 	UserProfile *tailcfg.UserProfile
 }
 
-func getPageData(ctx context.Context, remoteAddr string) *Page {
-	whois, err := whois(ctx, remoteAddr)
-	if err != nil {
-		return &Page{UserProfile: nil}
-	}
-	return &Page{UserProfile: whois.UserProfile}
-}
-
-func whois(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error) {
+func tailscaleWhois(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error) {
 	localClient := &tailscale.LocalClient{}
 	whois, err := localClient.WhoIs(ctx, remoteAddr)
 
