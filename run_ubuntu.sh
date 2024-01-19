@@ -3,5 +3,5 @@
 apt-get update
 apt-get install -y golang
 
-go install github.com/clstokes/streamer-demo@latest
-nohup ./go/bin/streamer-demo &
+go install github.com/clstokes/demo-streamer@latest
+nohup ./go/bin/demo-streamer &
