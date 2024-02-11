@@ -100,7 +100,9 @@
       {{ .FirstInitial }}
     </div>
     <div id="user-profile-details">
+      {{ if ne .UserProfile.DisplayName nil }}
       <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
+      {{ end }}
       <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
     </div>
     {{ end }}
@@ -146,8 +148,8 @@
     let engine = Engine.create();
 
     const textures = [
-      "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png",
-      "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png",
+      "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png", // TODO: move to this repo
+      "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png", // TODO: move to this repo
     ];
     function init() {
       let width = $(window).width();
