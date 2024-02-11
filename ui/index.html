@@ -34,7 +34,8 @@
 
         width: 250px;
       }
-      #user-profile {
+      #user-profile, .user-profile {
+        z-index: 10;
         position: fixed;
         right: 30px;
         top: 30px;
@@ -58,12 +59,14 @@
         display: block;
       }
       #user-profile-details {
+        z-index: 9;
         display: none;
 
         position: fixed;
-        right: 40px;
-        top: 120px;
+        right: 20px;
+        top: 20px;
         padding: 16px;
+        padding-top: 5rem;
 
         background-color: white;
         color: rgb(48, 44, 44);
@@ -75,6 +78,10 @@
         font-weight: 500;
         line-height: 24px;
       }
+      #user-profile-details:hover {
+        display: block;
+      }
+
       #user-profile-name {
         text-transform: capitalize;
       }
@@ -97,6 +104,9 @@
     </div>
 
     {{ if ne .UserProfile nil }}
+    <div id="user-profile">
+      {{ .FirstInitial }}
+    </div>
     <div id="user-profile">
       {{ .FirstInitial }}
     </div>
