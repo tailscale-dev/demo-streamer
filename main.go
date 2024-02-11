@@ -103,9 +103,7 @@ func tailscaleWhois(ctx context.Context, remoteAddr string) (*apitype.WhoIsRespo
 		return nil, fmt.Errorf("failed to identify remote user")
 	}
 
-	if *dev {
-		fmt.Printf("user info from incoming request [%+v] \n", *whois.UserProfile)
-	}
+	fmt.Printf("user info [%+v] for [%+v] \n", *whois.UserProfile, remoteAddr)
 
 	return whois, nil
 }
