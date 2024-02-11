@@ -54,15 +54,28 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		var p *Page
+		var pageData *Page
 		whois, err := tailscaleWhois(r.Context(), r.RemoteAddr)
 		if err != nil {
-			p = &Page{UserProfile: nil}
+			pageData = &Page{}
 		} else {
-			p = &Page{UserProfile: whois.UserProfile}
+			var firstInitial string
+			if whois.UserProfile.DisplayName != "" {
+				firstInitial = string(whois.UserProfile.DisplayName[0])
+			} else {
+				firstInitial = string(whois.UserProfile.LoginName[0])
+			}
+			pageData = &Page{
+				UserProfile:  whois.UserProfile,
+				FirstInitial: firstInitial,
+			}
 		}
 
-		templateFn().Execute(w, p)
+		err = templateFn().Execute(w, pageData)
+		if err != nil {
+			fmt.Printf("error rendering template [%+v] \n", err)
+			// TODO: re-render template with nil pageData to not interrupt demo?
+		}
 	})
 
 	fmt.Printf("Starting server: http://localhost:%s/\n", *port)
@@ -72,7 +85,8 @@ func main() {
 }
 
 type Page struct {
-	UserProfile *tailcfg.UserProfile
+	UserProfile  *tailcfg.UserProfile
+	FirstInitial string
 }
 
 func tailscaleWhois(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error) {
@@ -89,9 +103,7 @@ func tailscaleWhois(ctx context.Context, remoteAddr string) (*apitype.WhoIsRespo
 		return nil, fmt.Errorf("failed to identify remote user")
 	}
 
-	if *dev {
-		fmt.Printf("user info from incoming request [%+v]", *whois.UserProfile)
-	}
+	fmt.Printf("user info [%+v] for [%+v] \n", *whois.UserProfile, remoteAddr)
 
 	return whois, nil
 }

@@ -5,7 +5,8 @@
     <title>demo-streamer</title>
     <style>
       body {
-        background-color: #1c1815;
+        background-color: #1c3058; /* same as tailscale.com/enterprise */
+
         font-family: ui-sans-serif, system-ui;
         color: #eee;
       }
@@ -26,17 +27,59 @@
         font-size: 1.4em;
         margin-bottom: 0.2em;
       }
-      #whois {
-        position: fixed;
-        right: 0px;
-        bottom: 0px;
-        padding: 10px;
-        text-align: center;
-      }
       #logo {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+
         width: 250px;
+      }
+      #user-profile {
+        position: fixed;
+        right: 30px;
+        top: 30px;
+        height: 2rem; /* TODO: 40px matches the ball size, but throws off text centering */
+        width: 2rem;
         padding: 10px;
-        padding-top: 15px;
+        
+        color: black;
+        background-color: white;
+        border: 8px solid rgb(104,101,98);
+        border-radius: 50%;
+
+        text-align: center;
+
+        text-transform: capitalize;
+        font-weight: 500;
+        font-size: 26px; /* TODO: this centers it in the circle, but probably a better way to do it */
+
+      }
+      #user-profile:hover + #user-profile-details {
+        display: block;
+      }
+      #user-profile-details {
+        display: none;
+
+        position: fixed;
+        right: 40px;
+        top: 120px;
+        padding: 16px;
+
+        background-color: white;
+        color: rgb(48, 44, 44);
+
+        border-width: 1px;
+        border-radius: .5rem;
+
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 24px;
+      }
+      #user-profile-name {
+        text-transform: capitalize;
+      }
+      #user-profile-email {
+        text-transform: lowercase;
       }
     </style>
   </head>
@@ -52,10 +95,20 @@
         <li>Single sign-on (SSO) for your network</li>
       </ul>
     </div>
-    <div id="whois">
-      {{ if ne .UserProfile nil }}<div>Welcome, {{ .UserProfile.LoginName }}.</div>{{ end }}
-      <img id="logo" src="/ui/Tailscale-Logo-White.png" />
+
+    {{ if ne .UserProfile nil }}
+    <div id="user-profile">
+      {{ .FirstInitial }}
     </div>
+    <div id="user-profile-details">
+      {{ if ne .UserProfile.DisplayName nil }}
+      <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
+      {{ end }}
+      <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
+    </div>
+    {{ end }}
+
+    <img id="logo" src="/ui/Tailscale-Logo-White.png" />
   </body>
 
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -91,13 +144,13 @@
 
     const { Engine, Render, Runner, World, Bodies } = Matter;
 
-    const edgeColor = "#1c1815";
+    const edgeColor = "#1c3058";
     // const edgeColor = "#ddd";
     let engine = Engine.create();
 
     const textures = [
-      "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png",
-      "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png",
+      "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png", // TODO: move to this repo
+      "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png", // TODO: move to this repo
     ];
     function init() {
       let width = $(window).width();
@@ -194,7 +247,7 @@
 
       Render.run(render);
 
-      const handleClick = () => {
+      const requestBallDrop = () => {
         const xhr = new XMLHttpRequest();
         xhr.timeout = 1000;
 
@@ -220,7 +273,7 @@
         xhr.send();
       };
 
-      setInterval(handleClick, 155);
+      setInterval(requestBallDrop, 155);
     }
 
     init();
@@ -229,7 +282,7 @@
         console.log("reloading after window resize");
         window.location.reload();
       },
-      250,
+      500,
       false
     );
   </script>
