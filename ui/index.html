@@ -10,20 +10,21 @@
         font-family: ui-sans-serif, system-ui;
         color: #eee;
       }
-      #marketing-message {
+      #marketing {
         position: absolute;
+        min-width: 500px;
         top: 30%;
         right: 30%;
       }
-      #marketing-message h1 {
+      #marketing h1 {
         font-size: 3em;
         margin-bottom: 10px;
       }
-      #marketing-message ul {
+      #marketing ul {
         list-style-type: square;
         padding-left: 25px;
       }
-      #marketing-message > ul li {
+      #messages > li {
         font-size: 1.4em;
         margin-bottom: 0.2em;
       }
@@ -93,13 +94,13 @@
   
   <body>
     <canvas id="funnel"></canvas>
-    <div id="marketing-message">
+    <div id="marketing">
       <h1>Tailscale</h1>
-      <ul>
-        <li>Zero-config business VPN</li>
-        <li>Software defined network based on WireGuard®</li>
-        <li>Secure access to shared resources</li>
-        <li>Single sign-on (SSO) for your network</li>
+      <ul id="messages">
+        <li contenteditable="true" spellcheck="false">Zero-config business VPN</li>
+        <li contenteditable="true" spellcheck="false">Software defined network based on WireGuard®</li>
+        <li contenteditable="true" spellcheck="false">Secure access to shared resources</li>
+        <li contenteditable="true" spellcheck="false">Single sign-on (SSO) for your network</li>
       </ul>
     </div>
 
@@ -150,7 +151,28 @@
      * All credit to https://github.com/shayne for the animation code.
      */
     const world = document.getElementById("funnel");
-    const messageBox = document.getElementById("marketing-message");
+    const messageBox = document.getElementById("marketing");
+    const messages = document.getElementById("messages");
+
+    function initMessaging() {
+      const storedMessages = localStorage.getItem("messages", messages.innerHTML);
+      if (storedMessages != null) {
+        console.log("loading custom messages from local storage")
+        messages.innerHTML = storedMessages;
+      }
+
+      const config = { childList: true, subtree: true, characterData: true };
+  
+      const callback = mutations => {  
+        mutations.forEach(mutation => {
+          console.log("saving custom messages to local storage")
+          localStorage.setItem("messages", messages.innerHTML);
+        });
+      }
+      const observer = new MutationObserver(callback);
+      observer.observe(messages, config);
+    }
+    initMessaging();
 
     const { Engine, Render, Runner, World, Bodies } = Matter;
 
@@ -162,7 +184,7 @@
       "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png", // TODO: move to this repo
       "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png", // TODO: move to this repo
     ];
-    function init() {
+    function initAnimation() {
       let width = $(window).width();
       let height = $(window).height();
 
@@ -286,7 +308,7 @@
       setInterval(requestBallDrop, 155);
     }
 
-    init();
+    initAnimation();
     onresize = debounce(
       (event) => {
         console.log("reloading after window resize");
