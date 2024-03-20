@@ -12,8 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"tailscale.com/client/tailscale"
-	"tailscale.com/client/tailscale/apitype"
-	"tailscale.com/tailcfg"
 )
 
 //go:embed ui/*
@@ -54,22 +52,26 @@ func main() {
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		var pageData *Page
-		whois, err := tailscaleWhois(r.Context(), r.RemoteAddr)
+		var pageData *page
+		whois, err := tailscaleWhois(r.Context(), r)
 		if err != nil {
-			pageData = &Page{}
-		} else {
-			var firstInitial string
-			if whois.UserProfile.DisplayName != "" {
-				firstInitial = string(whois.UserProfile.DisplayName[0])
-			} else {
-				firstInitial = string(whois.UserProfile.LoginName[0])
+			pageData = &page{
+				UserProfile: nil,
 			}
-			pageData = &Page{
-				UserProfile:  whois.UserProfile,
+		} else if whois != nil {
+			var firstInitial string
+			if whois.DisplayName != "" {
+				firstInitial = string(whois.DisplayName[0])
+			} else {
+				firstInitial = string(whois.LoginName[0])
+			}
+			pageData = &page{
+				UserProfile:  whois,
 				FirstInitial: firstInitial,
 			}
 		}
+
+		fmt.Printf("user info [%+v] for [%+v] \n", pageData, r.RemoteAddr)
 
 		err = templateFn().Execute(w, pageData)
 		if err != nil {
@@ -84,26 +86,43 @@ func main() {
 	}
 }
 
-type Page struct {
-	UserProfile  *tailcfg.UserProfile
+type page struct {
+	UserProfile  *whoisData
 	FirstInitial string
 }
 
-func tailscaleWhois(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error) {
+type whoisData struct {
+	LoginName   string
+	DisplayName string
+}
+
+func tailscaleWhois(ctx context.Context, r *http.Request) (*whoisData, error) {
+	var u *whoisData
+
 	localClient := &tailscale.LocalClient{}
-	whois, err := localClient.WhoIs(ctx, remoteAddr)
+	whois, err := localClient.WhoIs(ctx, r.RemoteAddr)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to identify remote host: %w", err)
-	}
-	if whois.Node.IsTagged() {
-		return nil, fmt.Errorf("tagged nodes do not have a user identity")
-	}
-	if whois.UserProfile == nil || whois.UserProfile.LoginName == "" {
-		return nil, fmt.Errorf("failed to identify remote user")
+		if r.Header.Get("Tailscale-User-Login") != "" {
+			// https://tailscale.com/kb/1312/serve#identity-headers
+			u = &whoisData{
+				LoginName:   r.Header.Get("Tailscale-User-Login"),
+				DisplayName: r.Header.Get("Tailscale-User-Name"),
+			}
+		} else {
+			return nil, fmt.Errorf("failed to identify remote host: %w", err)
+		}
+	} else {
+		if whois.Node.IsTagged() {
+			return nil, fmt.Errorf("tagged nodes do not have a user identity")
+		} else if whois.UserProfile == nil || whois.UserProfile.LoginName == "" {
+			return nil, fmt.Errorf("failed to identify remote user")
+		}
+		u = &whoisData{
+			LoginName:   whois.UserProfile.LoginName,
+			DisplayName: whois.UserProfile.DisplayName,
+		}
 	}
 
-	fmt.Printf("user info [%+v] for [%+v] \n", *whois.UserProfile, remoteAddr)
-
-	return whois, nil
+	return u, nil
 }
