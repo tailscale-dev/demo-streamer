@@ -103,17 +103,12 @@
       </ul>
     </div>
 
-    {{ if ne .UserProfile nil }}
-    <div id="user-profile">
-      {{ .FirstInitial }}
-    </div>
-    <div id="user-profile">
-      {{ .FirstInitial }}
-    </div>
+    {{ if ne .UserProfile nil -}}
+    <div id="user-profile">{{ .FirstInitial }}</div>
     <div id="user-profile-details">
-      {{ if ne .UserProfile.DisplayName nil }}
+      {{- if ne .UserProfile.DisplayName nil }}
       <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
-      {{ end }}
+      {{- end }}
       <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
     </div>
     {{ end }}
