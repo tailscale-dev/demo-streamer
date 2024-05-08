@@ -16,14 +16,14 @@ docker run --publish 8080 demo-streamer
 apt-get update
 apt-get install -y golang
 
-go install github.com/clstokes/demo-streamer@latest
+go install github.com/tailscale-dev/demo-streamer@latest
 nohup ./go/bin/demo-streamer &
 ```
 
 or
 
 ```shell
-curl -fsSL https://raw.githubusercontent.com/clstokes/demo-streamer/main/run_ubuntu.sh | sh
+curl -fsSL https://raw.githubusercontent.com/tailscale-dev/demo-streamer/main/run_ubuntu.sh | sh
 ```
 
 ## To enable Tailscale Funnel
