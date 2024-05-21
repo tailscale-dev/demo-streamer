@@ -36,31 +36,8 @@
 
         width: 250px;
       }
-      #user-profile, .user-profile {
+      #user-profile {
         z-index: 10;
-        position: fixed;
-        right: 30px;
-        top: 30px;
-        height: 2rem; /* TODO: 40px matches the ball size, but throws off text centering */
-        width: 2rem;
-        padding: 10px;
-        
-        color: black;
-        background-color: white;
-        border: 8px solid rgb(104,101,98);
-        border-radius: 50%;
-
-        text-align: center;
-
-        text-transform: capitalize;
-        font-weight: 500;
-        font-size: 26px; /* TODO: this centers it in the circle, but probably a better way to do it */
-      }
-      #user-profile:hover + #user-profile-details {
-        display: block;
-      }
-      #user-profile-details {
-        z-index: 9;
         display: block;
 
         position: fixed;
@@ -76,18 +53,14 @@
 
         line-height: 24px;
       }
-      #user-profile-details:hover {
-        display: block;
-      }
-
       #user-profile-name {
         text-transform: capitalize;
       }
       #user-profile-email {
         text-transform: lowercase;
       }
-      #status-connected, #status-not-connected {
-        display: none;
+      #status {
+        display: inline;
       }
     </style>
   </head>
@@ -103,17 +76,16 @@
       </ul>
     </div>
 
-    {{ if ne .UserProfile nil -}}
-    <div id="user-profile-details">
+    <div id="user-profile">
+      {{ if ne .UserProfile nil -}}
       {{- if ne .UserProfile.DisplayName nil }}
       <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
       {{- end }}
       <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
       <br/>
-      <div id="status-connected">🟢 Connected</div>
-      <div id="status-not-connected">🔴 Not connected</div>
+      {{ end }}
+      <div id="status"></div>
     </div>
-    {{ end }}
 
     <img id="logo" src="/ui/Tailscale-Logo-White.png" />
   </body>
@@ -281,25 +253,26 @@
 
         errFn = () => {
           console.log("error from backend");
-          document.title = `🔴 ${pageTitle}`;
-          document.getElementById("status-connected").style.display = "none";
-          document.getElementById("status-not-connected").style.display = "block";
+          const statusMessage = "🔴 Not connected";
+          document.title = statusMessage;
+          document.getElementById("status").innerText = statusMessage;
+        };
+
+        successFn = () => {
+          if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+            World.add(engine.world, [createBall()]);
+            const statusMessage = "🟢 Connected";
+            document.title = statusMessage;
+            document.getElementById("status").innerText = statusMessage;
+          } else {
+            errFn();
+          }
         };
 
         xhr.onabort = errFn;
         xhr.onerror = errFn;
         xhr.ontimeout = errFn;
-
-        xhr.onload = () => {
-          if (xhr.readyState === xhr.DONE && xhr.status === 200) {
-            World.add(engine.world, [createBall()]);
-            document.title = `🟢 ${pageTitle}`;
-            document.getElementById("status-connected").style.display = "block";
-          document.getElementById("status-not-connected").style.display = "none";
-          } else {
-            errFn();
-          }
-        };
+        xhr.onload = successFn;
 
         xhr.open("GET", "/api/uuid");
         xhr.send();
