@@ -61,13 +61,12 @@
       }
       #user-profile-details {
         z-index: 9;
-        display: none;
+        display: block;
 
         position: fixed;
         right: 20px;
         top: 20px;
         padding: 16px;
-        padding-top: 5rem;
 
         background-color: white;
         color: rgb(48, 44, 44);
@@ -87,20 +86,6 @@
       #user-profile-email {
         text-transform: lowercase;
       }
-      #status {
-        z-index: 10;
-        position: fixed;
-        left: 30px;
-        top: 30px;
-        padding: 10px;
-        
-        color: black;
-        background-color: white;
-        border-radius: 5px;
-
-        text-align: center;
-        text-transform: capitalize;
-      }
       #status-connected, #status-not-connected {
         display: none;
       }
@@ -109,10 +94,6 @@
   
   <body>
     <canvas id="funnel"></canvas>
-    <div id="status">
-      <div id="status-connected">🟢 Connected</div>
-      <div id="status-not-connected">🔴 Not connected</div>
-    </div>
     <div id="marketing">
       <h1>Tailscale</h1>
       <ul id="messages">
@@ -123,12 +104,14 @@
     </div>
 
     {{ if ne .UserProfile nil -}}
-    <div id="user-profile">{{ .FirstInitial }}</div>
     <div id="user-profile-details">
       {{- if ne .UserProfile.DisplayName nil }}
       <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
       {{- end }}
       <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
+      <br/>
+      <div id="status-connected">🟢 Connected</div>
+      <div id="status-not-connected">🔴 Not connected</div>
     </div>
     {{ end }}
 
