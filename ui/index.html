@@ -9,6 +9,7 @@
 
         font-family: ui-sans-serif, system-ui;
         color: #eee;
+        font-size: 1.2em;
       }
       #marketing {
         position: absolute;
@@ -54,7 +55,6 @@
         text-transform: capitalize;
         font-weight: 500;
         font-size: 26px; /* TODO: this centers it in the circle, but probably a better way to do it */
-
       }
       #user-profile:hover + #user-profile-details {
         display: block;
@@ -75,8 +75,6 @@
         border-width: 1px;
         border-radius: .5rem;
 
-        font-size: 16px;
-        font-weight: 500;
         line-height: 24px;
       }
       #user-profile-details:hover {
@@ -89,11 +87,32 @@
       #user-profile-email {
         text-transform: lowercase;
       }
+      #status {
+        z-index: 10;
+        position: fixed;
+        left: 30px;
+        top: 30px;
+        padding: 10px;
+        
+        color: black;
+        background-color: white;
+        border-radius: 5px;
+
+        text-align: center;
+        text-transform: capitalize;
+      }
+      #status-connected, #status-not-connected {
+        display: none;
+      }
     </style>
   </head>
   
   <body>
     <canvas id="funnel"></canvas>
+    <div id="status">
+      <div id="status-connected">🟢 Connected</div>
+      <div id="status-not-connected">🔴 Not connected</div>
+    </div>
     <div id="marketing">
       <h1>Tailscale</h1>
       <ul id="messages">
@@ -280,6 +299,8 @@
         errFn = () => {
           console.log("error from backend");
           document.title = `🔴 ${pageTitle}`;
+          document.getElementById("status-connected").style.display = "none";
+          document.getElementById("status-not-connected").style.display = "block";
         };
 
         xhr.onabort = errFn;
@@ -290,6 +311,8 @@
           if (xhr.readyState === xhr.DONE && xhr.status === 200) {
             World.add(engine.world, [createBall()]);
             document.title = `🟢 ${pageTitle}`;
+            document.getElementById("status-connected").style.display = "block";
+          document.getElementById("status-not-connected").style.display = "none";
           } else {
             errFn();
           }
