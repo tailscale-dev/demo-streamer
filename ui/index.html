@@ -60,7 +60,8 @@
         text-transform: lowercase;
       }
       #status {
-        display: inline;
+        display: block;
+        padding-top: 1em;
       }
     </style>
   </head>
@@ -82,7 +83,6 @@
       <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
       {{- end }}
       <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
-      <br/>
       {{ end }}
       <div id="status"></div>
     </div>
