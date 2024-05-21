@@ -113,24 +113,22 @@
     };
   </script>
   <script>
-    const pageTitle = document.title;
-
     /**
-     * All credit to https://github.com/shayne for the animation code.
+     * Save messages to localStorage on changes.
      */
     const world = document.getElementById("funnel");
     const messageBox = document.getElementById("marketing");
     const messages = document.getElementById("messages");
-
+    
     function initMessaging() {
       const storedMessages = localStorage.getItem("messages", messages.innerHTML);
       if (storedMessages != null) {
         console.log("loading custom messages from local storage")
         messages.innerHTML = storedMessages;
       }
-
+      
       const config = { childList: true, subtree: true, characterData: true };
-  
+      
       const callback = mutations => {  
         mutations.forEach(mutation => {
           console.log("saving custom messages to local storage")
@@ -141,7 +139,11 @@
       observer.observe(messages, config);
     }
     initMessaging();
-
+    
+    /**
+     * Animation.
+     * All credit to https://github.com/shayne for the animation code.
+     */
     const { Engine, Render, Runner, World, Bodies } = Matter;
 
     const edgeColor = "#1c3058";
@@ -252,6 +254,7 @@
         xhr.timeout = 1000;
 
         errFn = () => {
+          xhr.abort();
           console.log("error from backend");
           const statusMessage = "🔴 Not connected";
           document.title = statusMessage;
@@ -278,7 +281,14 @@
         xhr.send();
       };
 
-      setInterval(requestBallDrop, 155);
+      (function loop() {
+        // https://developer.mozilla.org/en-US/docs/Web/API/setInterval#ensure_that_execution_duration_is_shorter_than_interval_frequency
+        setTimeout(() => {
+          requestBallDrop();
+          loop();
+        }, 155);
+      })();
+
     }
 
     initAnimation();
