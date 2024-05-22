@@ -53,6 +53,9 @@
 
         line-height: 24px;
       }
+      #user-profile-details {
+        padding-bottom: 1em;
+      }
       #user-profile-name {
         text-transform: capitalize;
       }
@@ -61,7 +64,6 @@
       }
       #status {
         display: block;
-        padding-top: 1em;
       }
     </style>
   </head>
@@ -79,10 +81,12 @@
 
     <div id="user-profile">
       {{ if ne .UserProfile nil -}}
-      {{- if ne .UserProfile.DisplayName nil }}
-      <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
-      {{- end }}
-      <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
+        <div id="user-profile-details">
+          {{- if ne .UserProfile.DisplayName nil }}
+            <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
+          {{- end }}
+          <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
+        </div>
       {{ end }}
       <div id="status"></div>
     </div>
