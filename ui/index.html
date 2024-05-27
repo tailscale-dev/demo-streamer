@@ -3,12 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <title>demo-streamer</title>
+    <link rel="icon" type="image/x-icon" href="/ui/favicon.ico">
     <style>
       body {
         background-color: #1c3058; /* same as tailscale.com/enterprise */
 
         font-family: ui-sans-serif, system-ui;
         color: #eee;
+        font-size: 1.2em;
       }
       #marketing {
         position: absolute;
@@ -35,39 +37,14 @@
 
         width: 250px;
       }
-      #user-profile, .user-profile {
+      #user-profile {
         z-index: 10;
-        position: fixed;
-        right: 30px;
-        top: 30px;
-        height: 2rem; /* TODO: 40px matches the ball size, but throws off text centering */
-        width: 2rem;
-        padding: 10px;
-        
-        color: black;
-        background-color: white;
-        border: 8px solid rgb(104,101,98);
-        border-radius: 50%;
-
-        text-align: center;
-
-        text-transform: capitalize;
-        font-weight: 500;
-        font-size: 26px; /* TODO: this centers it in the circle, but probably a better way to do it */
-
-      }
-      #user-profile:hover + #user-profile-details {
         display: block;
-      }
-      #user-profile-details {
-        z-index: 9;
-        display: none;
 
         position: fixed;
         right: 20px;
         top: 20px;
         padding: 16px;
-        padding-top: 5rem;
 
         background-color: white;
         color: rgb(48, 44, 44);
@@ -75,19 +52,19 @@
         border-width: 1px;
         border-radius: .5rem;
 
-        font-size: 16px;
-        font-weight: 500;
         line-height: 24px;
       }
-      #user-profile-details:hover {
-        display: block;
+      #user-profile-details {
+        padding-bottom: 1em;
       }
-
       #user-profile-name {
         text-transform: capitalize;
       }
       #user-profile-email {
         text-transform: lowercase;
+      }
+      #status {
+        display: block;
       }
     </style>
   </head>
@@ -103,15 +80,17 @@
       </ul>
     </div>
 
-    {{ if ne .UserProfile nil -}}
-    <div id="user-profile">{{ .FirstInitial }}</div>
-    <div id="user-profile-details">
-      {{- if ne .UserProfile.DisplayName nil }}
-      <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
-      {{- end }}
-      <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
+    <div id="user-profile">
+      {{ if ne .UserProfile nil -}}
+        <div id="user-profile-details">
+          {{- if ne .UserProfile.DisplayName nil }}
+            <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
+          {{- end }}
+          <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
+        </div>
+      {{ end }}
+      <div id="status"></div>
     </div>
-    {{ end }}
 
     <img id="logo" src="/ui/Tailscale-Logo-White.png" />
   </body>
@@ -139,24 +118,22 @@
     };
   </script>
   <script>
-    const pageTitle = document.title;
-
     /**
-     * All credit to https://github.com/shayne for the animation code.
+     * Save messages to localStorage on changes.
      */
     const world = document.getElementById("funnel");
     const messageBox = document.getElementById("marketing");
     const messages = document.getElementById("messages");
-
+    
     function initMessaging() {
       const storedMessages = localStorage.getItem("messages", messages.innerHTML);
       if (storedMessages != null) {
         console.log("loading custom messages from local storage")
         messages.innerHTML = storedMessages;
       }
-
+      
       const config = { childList: true, subtree: true, characterData: true };
-  
+      
       const callback = mutations => {  
         mutations.forEach(mutation => {
           console.log("saving custom messages to local storage")
@@ -167,7 +144,11 @@
       observer.observe(messages, config);
     }
     initMessaging();
-
+    
+    /**
+     * Animation.
+     * All credit to https://github.com/shayne for the animation code.
+     */
     const { Engine, Render, Runner, World, Bodies } = Matter;
 
     const edgeColor = "#1c3058";
@@ -278,28 +259,41 @@
         xhr.timeout = 1000;
 
         errFn = () => {
+          xhr.abort();
           console.log("error from backend");
-          document.title = `🔴 ${pageTitle}`;
+          const statusMessage = "🔴 Not connected";
+          document.title = statusMessage;
+          document.getElementById("status").innerText = statusMessage;
         };
 
-        xhr.onabort = errFn;
-        xhr.onerror = errFn;
-        xhr.ontimeout = errFn;
-
-        xhr.onload = () => {
+        successFn = () => {
           if (xhr.readyState === xhr.DONE && xhr.status === 200) {
             World.add(engine.world, [createBall()]);
-            document.title = `🟢 ${pageTitle}`;
+            const statusMessage = "🟢 Connected";
+            document.title = statusMessage;
+            document.getElementById("status").innerText = statusMessage;
           } else {
             errFn();
           }
         };
 
+        xhr.onabort = errFn;
+        xhr.onerror = errFn;
+        xhr.ontimeout = errFn;
+        xhr.onload = successFn;
+
         xhr.open("GET", "/api/uuid");
         xhr.send();
       };
 
-      setInterval(requestBallDrop, 155);
+      (function loop() {
+        // https://developer.mozilla.org/en-US/docs/Web/API/setInterval#ensure_that_execution_duration_is_shorter_than_interval_frequency
+        setTimeout(() => {
+          requestBallDrop();
+          loop();
+        }, 155);
+      })();
+
     }
 
     initAnimation();

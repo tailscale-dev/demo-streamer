@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+
 //go:embed ui/*
 var ui embed.FS
 
