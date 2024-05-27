@@ -5,6 +5,7 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"time"
 	"html/template"
 	"io/fs"
 	"log"
@@ -12,18 +13,33 @@ import (
 
 	"github.com/google/uuid"
 	"tailscale.com/client/tailscale"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 //go:embed ui/*
 var ui embed.FS
 
 var (
-	port = flag.String("port", "80", "the port to listen on")
+	port = flag.String("port", "8080", "the port to listen on")
 	dev  = flag.Bool("dev", false, "enable dev mode")
 )
 
+var latencyHistogram = promauto.NewHistogram(prometheus.HistogramOpts{
+	Name:    "tailscale_whois_latency_milliseconds",
+	Help:    "The latency of Tailscale WhoIs requests in milliseconds",
+	Buckets: prometheus.DefBuckets,
+})
+
 func main() {
 	flag.Parse()
+
+	var droppedCounter = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "dropped_total",
+		Help: "The total number of dropped objects",
+	})
+
 
 	var templateFn func() *template.Template
 	if *dev {
@@ -48,8 +64,14 @@ func main() {
 	http.HandleFunc("/api/uuid", func(w http.ResponseWriter, r *http.Request) {
 		uuid := uuid.New().String()
 		fmt.Fprintf(w, "%s\n", uuid) // write to http response
-		fmt.Printf("%s\n", uuid)     // write to stdout - TODO: maybe only in dev mode?
+		if *dev {
+			fmt.Printf("%s\n", uuid)     // write to stdout - TODO: maybe only in dev mode?
+		}
+
+		droppedCounter.Inc() // Increment the counter
 	})
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		var pageData *page
@@ -71,7 +93,7 @@ func main() {
 			}
 		}
 
-		fmt.Printf("user info [%+v] for [%+v] \n", pageData, r.RemoteAddr)
+		fmt.Printf("user info [%+v] for [%+v] \n", *pageData, r.RemoteAddr)
 
 		err = templateFn().Execute(w, pageData)
 		if err != nil {
@@ -80,8 +102,8 @@ func main() {
 		}
 	})
 
-	fmt.Printf("Starting server: http://localhost:%s/\n", *port)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", *port), nil); err != nil {
+	fmt.Printf("Starting server: http://0.0.0.0:%s/\n", *port)
+	if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%s", *port), nil); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -101,6 +123,12 @@ func tailscaleWhois(ctx context.Context, r *http.Request) (*whoisData, error) {
 
 	localClient := &tailscale.LocalClient{}
 	whois, err := localClient.WhoIs(ctx, r.RemoteAddr)
+	start := time.Now() // Start measuring latency
+
+	defer func() {
+        latency := float64(time.Since(start)) / float64(time.Millisecond) // Calculate latency in milliseconds
+        latencyHistogram.Observe(latency)                                // Record latency in the histogram
+    }()
 
 	if err != nil {
 		if r.Header.Get("Tailscale-User-Login") != "" {
