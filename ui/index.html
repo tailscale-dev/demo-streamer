@@ -81,15 +81,11 @@
     </div>
 
     <div id="user-profile">
-      {{ if ne .UserProfile nil -}}
-        <div id="user-profile-details">
-          {{- if ne .UserProfile.DisplayName nil }}
-            <div id="user-profile-name"><strong>{{ .UserProfile.DisplayName }}</strong></div>
-          {{- end }}
-          <div id="user-profile-email">{{ .UserProfile.LoginName }}</div>
-        </div>
-      {{ end }}
-      <div id="status"></div>
+      <div id="user-profile-details">
+        <div id="user-profile-name"><strong id="display-name">Loading...</strong></div>
+        <div id="user-profile-email" style="display: none;"></div>
+      </div>
+      <div id="status">🟡 Checking connection...</div>
     </div>
 
     <img id="logo" src="/ui/Tailscale-Logo-White.png" />
@@ -261,17 +257,13 @@
         errFn = () => {
           xhr.abort();
           console.log("error from backend");
-          const statusMessage = "🔴 Not connected";
-          document.title = statusMessage;
-          document.getElementById("status").innerText = statusMessage;
+          updateConnectionStatus(false, "Connection failed");
         };
 
         successFn = () => {
           if (xhr.readyState === xhr.DONE && xhr.status === 200) {
             World.add(engine.world, [createBall()]);
-            const statusMessage = "🟢 Connected";
-            document.title = statusMessage;
-            document.getElementById("status").innerText = statusMessage;
+            updateConnectionStatus(true, "Connected");
           } else {
             errFn();
           }
@@ -295,6 +287,105 @@
       })();
 
     }
+
+    // User status management
+    let lastUserStatus = null;
+    
+    function updateConnectionStatus(connected, message) {
+      const statusElement = document.getElementById("status");
+      if (connected) {
+        const statusMessage = "🟢 " + message;
+        document.title = statusMessage;
+        statusElement.innerText = statusMessage;
+      } else {
+        const statusMessage = "🔴 " + message;
+        document.title = statusMessage;  
+        statusElement.innerText = statusMessage;
+      }
+    }
+    
+    function updateUserProfile(userStatus) {
+      const displayNameElement = document.getElementById("display-name");
+      const emailElement = document.getElementById("user-profile-email");
+      
+      if (userStatus.connected && userStatus.loginName) {
+        // User is connected and authenticated
+        displayNameElement.textContent = userStatus.displayName || userStatus.loginName;
+        emailElement.textContent = userStatus.loginName;
+        emailElement.style.display = "block";
+        
+        updateConnectionStatus(true, "Connected");
+      } else if (userStatus.connected) {
+        // Connected but no user info (might be connecting)
+        displayNameElement.textContent = "Connecting...";
+        emailElement.style.display = "none";
+        
+        updateConnectionStatus(true, "Connecting");
+      } else {
+        // Not connected
+        displayNameElement.textContent = "Not Connected";
+        emailElement.style.display = "none";
+        
+        updateConnectionStatus(false, userStatus.error || "Disconnected");
+      }
+    }
+    
+    function checkUserStatus() {
+      const xhr = new XMLHttpRequest();
+      xhr.timeout = 2000;
+      
+      xhr.onload = function() {
+        if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+          try {
+            const userStatus = JSON.parse(xhr.responseText);
+            console.log("Received user status:", userStatus);
+            console.log("Last user status:", lastUserStatus);
+            
+            // Always update if we don't have previous status, or if any key field has changed
+            const statusChanged = !lastUserStatus || 
+              lastUserStatus.connected !== userStatus.connected ||
+              lastUserStatus.loginName !== userStatus.loginName ||
+              lastUserStatus.displayName !== userStatus.displayName ||
+              (lastUserStatus.error && !userStatus.error) || // recovered from error
+              (!lastUserStatus.error && userStatus.error);   // new error occurred
+              
+            if (statusChanged) {
+              console.log("User status changed, updating UI");
+              updateUserProfile(userStatus);
+              lastUserStatus = userStatus;
+            } else {
+              console.log("No status change detected");
+            }
+          } catch (e) {
+            console.error("Failed to parse user status:", e);
+            const errorStatus = {connected: false, error: "Parse error"};
+            updateUserProfile(errorStatus);
+            lastUserStatus = errorStatus;
+          }
+        } else {
+          console.log("Request failed with status:", xhr.status);
+          const errorStatus = {connected: false, error: "Request failed"};
+          updateUserProfile(errorStatus);
+          lastUserStatus = errorStatus;
+        }
+      };
+      
+      xhr.onerror = xhr.ontimeout = xhr.onabort = function() {
+        console.log("Network error occurred");
+        const errorStatus = {connected: false, error: "Network error"};
+        updateUserProfile(errorStatus);
+        lastUserStatus = errorStatus;
+      };
+      
+      xhr.open("GET", "/api/user");
+      xhr.send();
+    }
+    
+    // Check user status more frequently than the ball drops
+    setInterval(checkUserStatus, 1000); // Every 1 second
+    
+    // Initial check
+    checkUserStatus();
 
     initAnimation();
     onresize = debounce(
