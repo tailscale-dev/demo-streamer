@@ -39,5 +39,7 @@ ENV HOSTNAME=demo-streamer
 # When using tsnet, we don't need to expose a specific port
 # The application will register with Tailscale and be accessible via the tailnet
 
+EXPOSE 8080
+
 # Default command uses tsnet mode
 CMD ["/app/demo-streamer", "--tsnet", "--tls"]
