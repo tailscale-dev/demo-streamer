@@ -18,9 +18,32 @@
         top: 30%;
         right: 30%;
       }
+      #carousel-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        margin-bottom: 10px;
+      }
       #marketing h1 {
         font-size: 3em;
-        margin-bottom: 10px;
+        margin: 0;
+      }
+      .carousel-arrow {
+        background: transparent;
+        border: none;
+        color: #eee;
+        font-size: 1.6em;
+        line-height: 1;
+        padding: 0 0.2em;
+        cursor: pointer;
+        user-select: none;
+      }
+      .carousel-arrow:hover,
+      .carousel-arrow:focus {
+        color: #fff;
+      }
+      .carousel-arrow:focus-visible {
+        outline: 1px dashed #eee;
       }
       #marketing ul {
         list-style-type: square;
@@ -72,7 +95,11 @@
   <body>
     <canvas id="funnel"></canvas>
     <div id="marketing">
-      <h1>Tailscale</h1>
+      <div id="carousel-controls">
+        <button id="carousel-prev" class="carousel-arrow" type="button" aria-label="Previous product">&#8249;</button>
+        <h1 id="product-title">Tailscale</h1>
+        <button id="carousel-next" class="carousel-arrow" type="button" aria-label="Next product">&#8250;</button>
+      </div>
       <ul id="messages">
         <li contenteditable="true" spellcheck="false">Zero Trust Programmable Networking</li>
         <li contenteditable="true" spellcheck="false">Single sign-on (SSO) for your network</li>
@@ -120,24 +147,84 @@
     const world = document.getElementById("funnel");
     const messageBox = document.getElementById("marketing");
     const messages = document.getElementById("messages");
-    
+    const titleEl = document.getElementById("product-title");
+
+    const PRODUCTS = [
+      { key: "tailscale", title: "Tailscale", storageKey: "messages-tailscale", defaultHTML: null },
+      {
+        key: "tailscale-pam",
+        title: "Tailscale PAM",
+        storageKey: "messages-tailscale-pam",
+        defaultHTML: `<li contenteditable="true" spellcheck="false">Item 1</li>
+        <li contenteditable="true" spellcheck="false">Item 2</li>
+        <li contenteditable="true" spellcheck="false">Item 3</li>`,
+      },
+      {
+        key: "tailscale-aperture",
+        title: "Tailscale Aperture",
+        storageKey: "messages-tailscale-aperture",
+        defaultHTML: `<li contenteditable="true" spellcheck="false">Item 1</li>
+        <li contenteditable="true" spellcheck="false">Item 2</li>
+        <li contenteditable="true" spellcheck="false">Item 3</li>`,
+      },
+    ];
+
+    let currentProductIndex = 0;
+
+    function migrateLegacyMessages() {
+      const tailscale = PRODUCTS[0];
+      if (localStorage.getItem(tailscale.storageKey) == null) {
+        const legacy = localStorage.getItem("messages");
+        if (legacy != null) {
+          console.log("migrating legacy 'messages' key to " + tailscale.storageKey);
+          localStorage.setItem(tailscale.storageKey, legacy);
+          localStorage.removeItem("messages");
+        }
+      }
+    }
+
+    function loadProductMessages(product) {
+      const stored = localStorage.getItem(product.storageKey);
+      return stored != null ? stored : product.defaultHTML;
+    }
+
+    function renderProduct(index) {
+      currentProductIndex = index;
+      const product = PRODUCTS[index];
+      titleEl.textContent = product.title;
+      messages.innerHTML = loadProductMessages(product);
+      if (typeof repositionRamps === "function") {
+        requestAnimationFrame(repositionRamps);
+      }
+    }
+
+    function goToProduct(delta) {
+      const n = PRODUCTS.length;
+      renderProduct((currentProductIndex + delta + n) % n);
+    }
+
     function initMessaging() {
-      const storedMessages = localStorage.getItem("messages", messages.innerHTML);
-      if (storedMessages != null) {
-        console.log("loading custom messages from local storage")
-        messages.innerHTML = storedMessages;
-      }
-      
+      PRODUCTS[0].defaultHTML = messages.innerHTML;
+      migrateLegacyMessages();
+      renderProduct(0);
+
       const config = { childList: true, subtree: true, characterData: true };
-      
-      const callback = mutations => {  
-        mutations.forEach(mutation => {
-          console.log("saving custom messages to local storage")
-          localStorage.setItem("messages", messages.innerHTML);
-        });
-      }
+
+      const callback = () => {
+        console.log("saving custom messages to local storage for " + PRODUCTS[currentProductIndex].key);
+        localStorage.setItem(PRODUCTS[currentProductIndex].storageKey, messages.innerHTML);
+      };
       const observer = new MutationObserver(callback);
       observer.observe(messages, config);
+
+      document.getElementById("carousel-prev").addEventListener("click", () => goToProduct(-1));
+      document.getElementById("carousel-next").addEventListener("click", () => goToProduct(1));
+
+      document.addEventListener("keydown", (e) => {
+        if (e.target && e.target.closest && e.target.closest("#messages")) return;
+        if (e.key === "ArrowLeft") goToProduct(-1);
+        else if (e.key === "ArrowRight") goToProduct(1);
+      });
     }
     initMessaging();
     
@@ -150,35 +237,12 @@
     const edgeColor = "#1c3058";
     // const edgeColor = "#ddd";
     let engine = Engine.create();
+    let ramps = [];
 
-    const textures = [
-      "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png", // TODO: move to this repo
-      "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png", // TODO: move to this repo
-    ];
-    function initAnimation() {
-      let width = $(window).width();
-      let height = $(window).height();
-
-      engine.events = {};
-      World.clear(engine.world);
-      Engine.clear(engine);
-      engine = Engine.create();
-      engine.timing.timeScale = 0.9;
-
-      let render = Render.create({
-        canvas: world,
-        engine: engine,
-        options: {
-          wireframes: false,
-          background: "transparent",
-          width: width,
-          height: height,
-        },
-      });
-
+    function createRamps() {
       let messageBoxPosition = messageBox.getBoundingClientRect();
 
-      World.add(engine.world, [
+      return [
         Bodies.rectangle(
           messageBoxPosition.x + messageBoxPosition.width/6,
           messageBoxPosition.y + 20,
@@ -212,7 +276,41 @@
             render: { fillStyle: edgeColor },
           }
         ),
-      ]);
+      ];
+    }
+
+    function repositionRamps() {
+      ramps.forEach((ramp) => World.remove(engine.world, ramp));
+      ramps = createRamps();
+      World.add(engine.world, ramps);
+    }
+
+    const textures = [
+      "https://user-images.githubusercontent.com/79330/224512133-beadac7e-2e05-402f-adf4-d439a95324a9.png", // TODO: move to this repo
+      "https://user-images.githubusercontent.com/79330/224512134-4d979eb1-b940-4781-81f9-3e279da48018.png", // TODO: move to this repo
+    ];
+    function initAnimation() {
+      let width = $(window).width();
+      let height = $(window).height();
+
+      engine.events = {};
+      World.clear(engine.world);
+      Engine.clear(engine);
+      engine = Engine.create();
+      engine.timing.timeScale = 0.9;
+
+      let render = Render.create({
+        canvas: world,
+        engine: engine,
+        options: {
+          wireframes: false,
+          background: "transparent",
+          width: width,
+          height: height,
+        },
+      });
+
+      repositionRamps();
 
       function createBall() {
         const ORIGINAL_SIZE = 120;
@@ -257,7 +355,7 @@
         errFn = () => {
           xhr.abort();
           console.log("error from backend");
-          updateConnectionStatus(false, "Connection failed");
+          updateConnectionStatus(false, "Disconnected");
         };
 
         successFn = () => {
@@ -358,21 +456,21 @@
             }
           } catch (e) {
             console.error("Failed to parse user status:", e);
-            const errorStatus = {connected: false, error: "Parse error"};
+            const errorStatus = {connected: false, error: "Disconnected"};
             updateUserProfile(errorStatus);
             lastUserStatus = errorStatus;
           }
         } else {
           console.log("Request failed with status:", xhr.status);
-          const errorStatus = {connected: false, error: "Request failed"};
+          const errorStatus = {connected: false, error: "Disconnected"};
           updateUserProfile(errorStatus);
           lastUserStatus = errorStatus;
         }
       };
-      
+
       xhr.onerror = xhr.ontimeout = xhr.onabort = function() {
         console.log("Network error occurred");
-        const errorStatus = {connected: false, error: "Network error"};
+        const errorStatus = {connected: false, error: "Disconnected"};
         updateUserProfile(errorStatus);
         lastUserStatus = errorStatus;
       };
