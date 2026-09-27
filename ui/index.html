@@ -145,6 +145,7 @@
      * Save messages to localStorage on changes.
      */
     const world = document.getElementById("funnel");
+    const messageBox = document.getElementById("marketing");
     const messages = document.getElementById("messages");
     const titleEl = document.getElementById("product-title");
 
@@ -248,56 +249,47 @@
     let engine = Engine.create();
     let ramps = [];
 
-    // A ramp built from two points, so it lines up exactly with the text it must
-    // route balls around. `angleOverride` lets the roof ramp keep a small downward
-    // tilt (a flat ramp would let balls rest on it instead of sliding off).
-    function rampBetween(p1, p2, thickness, angleOverride) {
+    // Balls have a 40px radius, so a ramp drawn exactly on the box's edge would
+    // still let a ball's near side reach past it and touch the text.
+    const BALL_CLEARANCE = 50;
+    const RAMP_THICKNESS = 20;
+    const RAMP_ANGLE = Math.PI * 0.06;
+    const PEAK_RADIUS = 18;
+    const rampRender = { fillStyle: edgeColor };
+
+    // A ramp between two points, sized/angled to fit exactly between them.
+    function rampBetween(p1, p2) {
       const dx = p2.x - p1.x;
       const dy = p2.y - p1.y;
       const length = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-      const angle = angleOverride != null ? angleOverride : Math.atan2(dy, dx);
 
-      return Bodies.rectangle((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, length, thickness, {
+      return Bodies.rectangle((p1.x + p2.x) / 2, (p1.y + p2.y) / 2, length, RAMP_THICKNESS, {
         isStatic: true,
-        angle: angle,
-        render: { fillStyle: edgeColor, strokeStyle: "#ff0055", lineWidth: 2 },
+        angle: Math.atan2(dy, dx),
+        render: rampRender,
       });
     }
 
-    // Balls have a 40px radius, so a ramp drawn exactly on the text's edge still
-    // lets a ball's near side reach past it and touch the text. Push every
-    // boundary point outward (away from the text) by more than the ball radius
-    // so the ball is fully clear by the time it touches a ramp.
-    const BALL_CLEARANCE = 50;
-
-    // The keep-out boundary: the title's top-left and top-right corners, then a
-    // line sloping down to the first list item's top-right corner. Ramps are built
-    // along this boundary so balls never fall onto the displayed text.
-    function getTextBoundaryPoints() {
-      const titleRect = titleEl.getBoundingClientRect();
-      const listRect = messages.getBoundingClientRect();
-      const firstLi = messages.querySelector("li");
-      const firstLiRect = (firstLi || titleEl).getBoundingClientRect();
-
-      // The "prev" arrow sits to the left of the title, so the title's own left
-      // edge is inset from the list's left edge. Use whichever is further left,
-      // or the gap above the list's left side is left unguarded.
-      const leftEdge = Math.min(titleRect.left, listRect.left);
-
-      return {
-        roofLeft: { x: leftEdge - BALL_CLEARANCE, y: titleRect.top - BALL_CLEARANCE },
-        titleTopRight: { x: titleRect.right + BALL_CLEARANCE, y: titleRect.top - BALL_CLEARANCE },
-        firstLiTopRight: { x: firstLiRect.right + BALL_CLEARANCE, y: firstLiRect.top },
-      };
-    }
-
+    // Two ramps forming a shallow "roof" above the whole product box (title +
+    // list), meeting at a single peak point and each sloping outward from
+    // there. Any ball landing on either slope always keeps moving away from
+    // the text and off the box's edge, so balls can't pool or bunch the way a
+    // single long diagonal could. A small rounded cap sits at the peak, since
+    // two straight ramps meeting at a point still leave a corner a ball can
+    // wedge into. The roof is rebuilt from the box's live size, so it tracks
+    // the text as it changes.
     function createRamps() {
-      const { roofLeft, titleTopRight, firstLiTopRight } = getTextBoundaryPoints();
-      const ROOF_TILT = Math.PI * -0.06;
+      const box = messageBox.getBoundingClientRect();
+      const apex = { x: box.left + box.width / 2, y: box.top - BALL_CLEARANCE };
+      const halfSpan = box.width / 2 + BALL_CLEARANCE;
+      const drop = halfSpan * Math.tan(RAMP_ANGLE);
+      const leftEnd = { x: apex.x - halfSpan, y: apex.y + drop };
+      const rightEnd = { x: apex.x + halfSpan, y: apex.y + drop };
 
       return [
-        rampBetween(roofLeft, titleTopRight, 20, ROOF_TILT),
-        rampBetween(titleTopRight, firstLiTopRight, 20),
+        rampBetween(apex, leftEnd),
+        rampBetween(apex, rightEnd),
+        Bodies.circle(apex.x, apex.y, PEAK_RADIUS, { isStatic: true, render: rampRender }),
       ];
     }
 
