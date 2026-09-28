@@ -104,12 +104,8 @@
     <canvas id="funnel"></canvas>
     <button id="carousel-prev" class="carousel-arrow" type="button" aria-label="Previous product">&#8249;</button>
     <div id="marketing">
-      <h1 id="product-title">Tailscale</h1>
-      <ul id="messages">
-        <li contenteditable="true" spellcheck="false">Zero Trust Programmable Networking</li>
-        <li contenteditable="true" spellcheck="false">Single sign-on (SSO) for your network</li>
-        <li contenteditable="true" spellcheck="false">Based on WireGuard®</li>
-      </ul>
+      <h1 id="product-title"></h1>
+      <ul id="messages"></ul>
     </div>
     <button id="carousel-next" class="carousel-arrow" type="button" aria-label="Next product">&#8250;</button>
 
@@ -156,22 +152,29 @@
     const titleEl = document.getElementById("product-title");
 
     const PRODUCTS = [
-      { key: "tailscale", title: "Tailscale", storageKey: "messages-tailscale", defaultHTML: null },
+      {
+        key: "tailscale",
+        title: "Tailscale",
+        storageKey: "messages-tailscale",
+        defaultHTML: `<li contenteditable="true" spellcheck="false">Zero Trust identity-based connectivity platform</li>
+        <li contenteditable="true" spellcheck="false">Single sign-on (SSO) for your network</li>
+        <li contenteditable="true" spellcheck="false">Peer-to-peer encrypted tunnels with WireGuard®</li>`,
+      },
       {
         key: "tailscale-pam",
         title: "Tailscale PAM",
         storageKey: "messages-tailscale-pam",
-        defaultHTML: `<li contenteditable="true" spellcheck="false">Item 1</li>
-        <li contenteditable="true" spellcheck="false">Item 2</li>
-        <li contenteditable="true" spellcheck="false">Item 3</li>`,
+        defaultHTML: `<li contenteditable="true" spellcheck="false">Auditable access to K8s, SSH, databases, and more</li>
+        <li contenteditable="true" spellcheck="false">Credential management and policy enforcement</li>
+        <li contenteditable="true" spellcheck="false">Record full sessions for auditability and compliance</li>`,
       },
       {
         key: "tailscale-aperture",
         title: "Tailscale Aperture",
         storageKey: "messages-tailscale-aperture",
-        defaultHTML: `<li contenteditable="true" spellcheck="false">Item 1</li>
-        <li contenteditable="true" spellcheck="false">Item 2</li>
-        <li contenteditable="true" spellcheck="false">Item 3</li>`,
+        defaultHTML: `<li contenteditable="true" spellcheck="false">Govern AI users and agents all in one place</li>
+        <li contenteditable="true" spellcheck="false">RBAC for providers, models, conections, and MCP servers</li>
+        <li contenteditable="true" spellcheck="false">Analyze full LLM sessions with budgets and quota enforcement</li>`,
       },
     ];
 
@@ -210,7 +213,6 @@
     }
 
     function initMessaging() {
-      PRODUCTS[0].defaultHTML = messages.innerHTML;
       migrateLegacyMessages();
       renderProduct(0);
 
