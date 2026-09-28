@@ -156,27 +156,48 @@
         key: "tailscale",
         title: "Tailscale",
         storageKey: "messages-tailscale",
-        defaultHTML: `<li contenteditable="true" spellcheck="false">Zero Trust identity-based connectivity platform</li>
-        <li contenteditable="true" spellcheck="false">Single sign-on (SSO) for your network</li>
-        <li contenteditable="true" spellcheck="false">Peer-to-peer encrypted tunnels with WireGuard®</li>`,
+        bullets: [
+          "Zero Trust identity-based connectivity platform",
+          "Single sign-on (SSO) for your network",
+          "Peer-to-peer encrypted tunnels with WireGuard®",
+        ],
       },
       {
         key: "tailscale-pam",
         title: "Tailscale PAM",
         storageKey: "messages-tailscale-pam",
-        defaultHTML: `<li contenteditable="true" spellcheck="false">Auditable access to K8s, SSH, databases, and more</li>
-        <li contenteditable="true" spellcheck="false">Credential management and policy enforcement</li>
-        <li contenteditable="true" spellcheck="false">Record full sessions for auditability and compliance</li>`,
+        bullets: [
+          "Auditable access to K8s, SSH, databases, and more",
+          "Record full sessions for auditability and compliance",
+          "Credential management and policy enforcement",
+        ],
       },
       {
         key: "tailscale-aperture",
         title: "Tailscale Aperture",
         storageKey: "messages-tailscale-aperture",
-        defaultHTML: `<li contenteditable="true" spellcheck="false">Govern AI users and agents all in one place</li>
-        <li contenteditable="true" spellcheck="false">RBAC for providers, models, conections, and MCP servers</li>
-        <li contenteditable="true" spellcheck="false">Analyze full LLM sessions with budgets and quota enforcement</li>`,
+        bullets: [
+          "Govern AI users and agents all in one place",
+          "RBAC for providers, models, conections, and MCP servers",
+          "Session recording with budgets and quota enforcement",
+        ],
       },
     ];
+
+    // Turns a product's plain-text bullets into the <li> markup #messages
+    // needs. Keeps PRODUCTS itself free of HTML, so bullet text is the only
+    // thing to edit there.
+    function bulletsToHTML(bullets) {
+      return bullets
+        .map((text) => {
+          const li = document.createElement("li");
+          li.contentEditable = "true";
+          li.spellcheck = false;
+          li.textContent = text;
+          return li.outerHTML;
+        })
+        .join("");
+    }
 
     let currentProductIndex = 0;
 
@@ -194,7 +215,7 @@
 
     function loadProductMessages(product) {
       const stored = localStorage.getItem(product.storageKey);
-      return stored != null ? stored : product.defaultHTML;
+      return stored != null ? stored : bulletsToHTML(product.bullets);
     }
 
     function renderProduct(index) {
