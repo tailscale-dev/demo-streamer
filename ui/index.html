@@ -16,27 +16,35 @@
         position: absolute;
         min-width: 500px;
         top: 35%;
-        right: 30%;
-      }
-      #carousel-controls {
-        display: flex;
-        align-items: center;
-        gap: 0.4em;
-        margin-bottom: 10px;
+        left: 30%;
       }
       #marketing h1 {
         font-size: 3em;
-        margin: 0;
+        margin: 0 0 10px 0;
       }
       .carousel-arrow {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
         background: transparent;
         border: none;
         color: #eee;
         font-size: 1.6em;
         line-height: 1;
-        padding: 0 0.2em;
         cursor: pointer;
         user-select: none;
+        z-index: 5;
+      }
+      #carousel-prev {
+        left: 20px;
+      }
+      #carousel-next {
+        right: 20px;
       }
       .carousel-arrow:hover,
       .carousel-arrow:focus {
@@ -94,18 +102,16 @@
   
   <body>
     <canvas id="funnel"></canvas>
+    <button id="carousel-prev" class="carousel-arrow" type="button" aria-label="Previous product">&#8249;</button>
     <div id="marketing">
-      <div id="carousel-controls">
-        <button id="carousel-prev" class="carousel-arrow" type="button" aria-label="Previous product">&#8249;</button>
-        <h1 id="product-title">Tailscale</h1>
-        <button id="carousel-next" class="carousel-arrow" type="button" aria-label="Next product">&#8250;</button>
-      </div>
+      <h1 id="product-title">Tailscale</h1>
       <ul id="messages">
         <li contenteditable="true" spellcheck="false">Zero Trust Programmable Networking</li>
         <li contenteditable="true" spellcheck="false">Single sign-on (SSO) for your network</li>
         <li contenteditable="true" spellcheck="false">Based on WireGuard®</li>
       </ul>
     </div>
+    <button id="carousel-next" class="carousel-arrow" type="button" aria-label="Next product">&#8250;</button>
 
     <div id="user-profile">
       <div id="user-profile-details">
